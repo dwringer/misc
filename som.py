@@ -15,6 +15,37 @@ DIRECTION_SYMBOLS = {'up': '^',
                      'down': 'v'}
 
 
+class Cell(object):
+    id = 0
+
+    def __init__(self):
+        self.id = Cell.id
+        Cell.id += 1
+
+
+class WrappedGrid(object):
+    def __init__(self, width, height):
+        _nodeArray = []
+        for i in xrange(width):
+            _nodeArray.append([Cell() for j in xrange(height)])
+        for j in xrange(height):
+            for i in xrange(width):
+                setattr(_nodeArray[j][i], 'right',
+                        _nodeArray[j][(i+1) if (i < (width - 1)) else 0])
+                setattr(_nodeArray[j][i], 'left',
+                        _nodeArray[j][(i-1) if (i > 0) else (width - 1)])
+                setattr(_nodeArray[j][i], 'up',
+                        _nodeArray[(j-1) if (j > 0) else (height - 1)][i])
+                setattr(_nodeArray[j][i], 'down',
+                        _nodeArray[(j+1) if (j < (height - 1)) else 0][i])
+                setattr(_nodeArray[j][i], 'dirs',
+                        ['right', 'left', 'up', 'down'])
+        self.nodes = []
+        for row in _nodeArray:
+            self.nodes.extend(row)
+        self.sides = self.nodes
+
+
 class SOMCell(object):
     "A single cell of a [Kohonen] Self-Organizing Map."
     def __init__(self, node_implementation):
@@ -31,7 +62,7 @@ class SOMCell(object):
                 getattr(self, direction).value,
                 self.value)
         return measures.iteritems()
-    
+
 
 class NodeGraph(object):
     "A graph of connected SOM nodes."
@@ -74,15 +105,18 @@ class NodeGraph(object):
                             linksRepresented.append((node, otherNode))
                             linksRepresented.append((otherNode, node))
                             fileBody += ('\t' +
-                                         '"' + pixel_color(node.value) + '" -- "' +
-                                         pixel_color(otherNode.value) + '";\n')
+                                         '"' +
+                                         pixel_color(node.value) +
+                                         '" -- "' +
+                                         pixel_color(otherNode.value) +
+                                         '";\n')
         fileBody += '}\n'
         with open(filename, 'wb') as outf:
             outf.write(fileBody)
-   
+
     @property
     def error(self):
-        "Average euclidean distance per graph edge."        
+        "Average euclidean distance per graph edge."
         if len(self.nodes) == 1:
             return 0
         err = 0
@@ -128,7 +162,7 @@ class SOM(object):
         with open(filename, 'rb') as inf:
             itm = dill_load(inf)
         return itm
-        
+
     def fill_nodes(self, from_matrix):
         "Randomly assign values of  from_matrix  to nodes of the SOM."
         data = list(from_matrix)
@@ -141,7 +175,7 @@ class SOM(object):
         "Return the node valued nearest [in euclidean distance] to  value ."
         bmu = None
         best = None
-        
+
         for n in self.nodes:
             dist = euclidean_distance(value, n.value)
             if (bmu is None) or (dist < best):
@@ -180,7 +214,7 @@ class SOM(object):
                     if node.node.id == getattr(n.node, direction).id:
                         setattr(n, direction, node)
                         break
-                    
+
     def neighborhood(self, nodeU, nodeV, step,
                      max_step=100, max_width=5):
         "A parametric exponential neighborhood function for weighting."
@@ -190,7 +224,7 @@ class SOM(object):
             raise Exception('Width must be >1')
         width = max_width - (max_width * (float(step) / max_step))
         return self.exp_fn(self.distance(nodeU, nodeV), width)
-                        
+
     def exp_fn(self, distance, width):
         "Memoized version of exponential component to neighborhood function."
         if distance is None:
@@ -209,7 +243,7 @@ class SOM(object):
             us.extend([self.nodes[i] for j in xrange(len(self.nodes))])
             vs.extend([n for n in self.nodes])
         mapnull(self.distance, us, vs)
-                    
+
     def distance(self, nodeU, nodeV):
         "Return the topological distance between  nodeU  and  nodeV ."
         if nodeU == nodeV:
@@ -217,13 +251,13 @@ class SOM(object):
         elif (nodeU, nodeV) in self.distanceCache:
             return self.distanceCache[nodeU, nodeV]
         distance = 0
-        
+
         def neighbors(n):
             ns = []
             for direction in n.node.dirs:
                 ns.append(getattr(n, direction))
             return set(ns)
-        
+
         def set_neighbors(node_set):
             result = []
             for n in node_set:
@@ -243,7 +277,7 @@ class SOM(object):
         self.distanceCache[nodeU, nodeV] = distance
         self.distanceCache[nodeV, nodeU] = distance
         return distance
-            
+
     def crystallize(self, filename):
         "Save the entire SOM to a dill-pickled file  filename ."
         setrecursionlimit(10000)
@@ -258,5 +292,3 @@ class SOM(object):
             for nn in self.nodes:
                 print(n.node.id, '=>', nn.node.id, '::',
                       self.distance(n, nn))
-
-
