@@ -15,6 +15,42 @@ DIRECTION_SYMBOLS = {'up': '^',
                      'down': 'v'}
 
 
+def image_to_color_graph(filename_in, filename_out, width, height,
+                         return_colors=False):
+    from PIL import Image
+    _img = Image.open(filename_in)
+    _pixels = _img.load()
+    _pixelArray = [_pixels[i, j]
+                   for i in xrange(_img.width)
+                   for j in xrange(_img.height)]
+    shuffle(_pixelArray)
+    _sample = map(list, _pixelArray[:min(len(_pixelArray), 10000)])
+    _som = SOM(WrappedGrid(width, height))
+    _som.fill_nodes(_sample)
+    _som.train(_sample, 8)
+    _som2 = SOM(WrappedGrid(width, height))
+    for i, n in enumerate(_som.nodes):
+        _som2.nodes[i].value = map(lambda x: x/256., n.value)
+    _ng = NodeGraph(_som2.nodes)
+    _ng.graphviz(filename_out)
+    if return_colors:
+        return _som, map(pixel_color, map(lambda x: x.value, _som.nodes))
+    else:
+        return _som
+
+
+def image_filter(filename, output_file, output_size, som):
+    from PIL import Image
+    _img = Image.open(filename)
+    _img = _img.resize(output_size)
+    _pixels = _img.load()
+    for i in xrange(_img.width):
+        for j in xrange(_img.height):
+            _pixels[i, j] = tuple(
+                map(int, som.best_matching_unit(_pixels[i, j]).value))
+    _img.save(output_file)
+
+
 class Cell(object):
     id = 0
 
@@ -30,15 +66,15 @@ class WrappedGrid(object):
             _nodeArray.append([Cell() for j in xrange(height)])
         for j in xrange(height):
             for i in xrange(width):
-                setattr(_nodeArray[j][i], 'right',
-                        _nodeArray[j][(i+1) if (i < (width - 1)) else 0])
-                setattr(_nodeArray[j][i], 'left',
-                        _nodeArray[j][(i-1) if (i > 0) else (width - 1)])
-                setattr(_nodeArray[j][i], 'up',
-                        _nodeArray[(j-1) if (j > 0) else (height - 1)][i])
-                setattr(_nodeArray[j][i], 'down',
-                        _nodeArray[(j+1) if (j < (height - 1)) else 0][i])
-                setattr(_nodeArray[j][i], 'dirs',
+                setattr(_nodeArray[i][j], 'right',
+                        _nodeArray[(i+1) if (i < (width - 1)) else 0][j])
+                setattr(_nodeArray[i][j], 'left',
+                        _nodeArray[(i-1) if (i > 0) else (width - 1)][j])
+                setattr(_nodeArray[i][j], 'up',
+                        _nodeArray[i][(j-1) if (j > 0) else (height - 1)])
+                setattr(_nodeArray[i][j], 'down',
+                        _nodeArray[i][(j+1) if (j < (height - 1)) else 0])
+                setattr(_nodeArray[i][j], 'dirs',
                         ['right', 'left', 'up', 'down'])
         self.nodes = []
         for row in _nodeArray:
@@ -81,21 +117,23 @@ class NodeGraph(object):
                           getattr(node, direction).value,
                           pixel_format))
 
-    def graphviz(self, svg_filename):
+    def graphviz(self, svg_filename, pixel_format='RGB'):
         from os import system
-        self.to_dot_file('tmp.dot')
+        self.to_dot_file('tmp.dot', pixel_format)
         system('dot -Tsvg tmp.dot > %s' % svg_filename)
         return svg_filename
 
-    def to_dot_file(self, filename):
+    def to_dot_file(self, filename, color_format='RGB'):
         linksRepresented = []
         fileBody = "graph nodegraph {\n"
         for node in self.nodes:
-            fileBody += ('\t' + '"' + pixel_color(node.value) + '" ' +
+            fileBody += ('\t' + '"' + pixel_color(node.value,
+                                                  color_format) + '" ' +
                          '[style = "filled"];\n')
-            fileBody += ('\t' + '"' + pixel_color(node.value) + '" ' +
+            fileBody += ('\t' + '"' + pixel_color(node.value,
+                                                  color_format) + '" ' +
                          '[fillcolor = "' +
-                         pixel_color(node.value).lower() +
+                         pixel_color(node.value, color_format).lower() +
                          '"];\n')
         for node in self.nodes:
             for otherNode in self.nodes:
