@@ -15,40 +15,104 @@ DIRECTION_SYMBOLS = {'up': '^',
                      'down': 'v'}
 
 
-def image_to_color_graph(filename_in, filename_out, width, height,
-                         return_colors=False):
+def image_to_color_graph(filename_in,
+                         filename_out,
+                         som_resolution,
+                         sample_resolution=None,
+                         return_colors=False,
+                         training_steps=8,
+                         sample_ratio=.01):
     from PIL import Image
+    width, height = som_resolution
     _img = Image.open(filename_in)
+    if sample_resolution is not None:
+        _img = _img.resize(sample_resolution)
     _pixels = _img.load()
     _pixelArray = [_pixels[i, j]
                    for i in xrange(_img.width)
                    for j in xrange(_img.height)]
-    shuffle(_pixelArray)
-    _sample = map(list, _pixelArray[:min(len(_pixelArray), 10000)])
+    if sample_ratio < 1.0:
+        shuffle(_pixelArray)
+        _sample = map(list, _pixelArray[:int(sample_ratio*len(_pixelArray))])
     _som = SOM(WrappedGrid(width, height))
     _som.fill_nodes(_sample)
-    _som.train(_sample, 8)
+    _som.train(_sample, training_steps)
     _som2 = SOM(WrappedGrid(width, height))
     for i, n in enumerate(_som.nodes):
         _som2.nodes[i].value = map(lambda x: x/256., n.value)
     _ng = NodeGraph(_som2.nodes)
     _ng.graphviz(filename_out)
     if return_colors:
-        return _som, map(pixel_color, map(lambda x: x.value, _som.nodes))
+        return _som, map(pixel_color, map(lambda x: x.value, _som2.nodes))
     else:
         return _som
 
 
-def image_filter(filename, output_file, output_size, som):
+def som_image_filter(filename, output_file, output_resolution, som):
     from PIL import Image
     _img = Image.open(filename)
-    _img = _img.resize(output_size)
+    if output_resolution is not None:
+        _img = _img.resize(output_resolution)
     _pixels = _img.load()
     for i in xrange(_img.width):
         for j in xrange(_img.height):
             _pixels[i, j] = tuple(
                 map(int, som.best_matching_unit(_pixels[i, j]).value))
     _img.save(output_file)
+
+
+def image_filter(filename_in,
+                 filename_out,
+                 sample_resolution,
+                 sample_ratio,
+                 output_resolution,
+                 som_resolution,
+                 training_steps,
+                 som_graph_svg="color_graph.svg",
+                 training_image=None,
+                 save_som_as=None):
+    _som, _palette = image_to_color_graph(filename_in if training_image is None
+                                          else training_image,
+                                          som_graph_svg,
+                                          som_resolution,
+                                          sample_resolution,
+                                          True,
+                                          training_steps,
+                                          sample_ratio)
+    if save_som_as is not None:
+        _som.crystallize(save_som_as)
+    som_image_filter(filename_in, filename_out, output_resolution, _som)
+    return _palette
+
+
+def process_images(input_directory,
+                   output_directory,
+                   sample_resolution,
+                   sample_ratio,
+                   som_resolution,
+                   som_training_steps,
+                   som_override_training_image=None,
+                   output_resolution=None):
+    from os import listdir
+    from os.path import join
+    _processed = []
+    for f in listdir(input_directory):
+        _fname = join(input_directory, f)
+        _palette = image_filter(_fname,
+                                join(output_directory, f),
+                                sample_resolution,
+                                sample_ratio,
+                                output_resolution,
+                                som_resolution,
+                                som_training_steps,
+                                join(output_directory,
+                                     f.replace('.', '_') + '_palette.svg'),
+                                som_override_training_image,
+                                join(output_directory,
+                                                 f.replace('.', '_') +
+                                                 '_som.dpk'))
+        _processed.append((_fname, _palette))
+    return _processed
 
 
 class Cell(object):
