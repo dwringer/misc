@@ -1,5 +1,5 @@
 from selenium.webdriver import Firefox, FirefoxProfile, Chrome, ChromeOptions
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from stem.socket import ControlPort as TorControlPort
 from stem.connection import authenticate as tor_authenticate
@@ -17,12 +17,14 @@ DETACHED_PROCESS = 0x00000008
 CREATE_NEW_PROCESS_GROUP = 0x00000200
 
 TOR_PATH = "C:/TOR/Browser/TorBrowser/Tor/"
-TOR_HASH = ""
-TOR_PWD = ''
+TOR_HASH = "16:12F7BB28240741BE6002176578BCCDFB4CCBE8AF889D16A3C0E62223C9"
+#OR_HASH = "16:6999469AF94727C68228EAB092E8339B2254E9214BCC230391A784F6"
+TOR_PWD = 'asdfjklsemicolon'
 
 CHROMEDRIVER_PATH = "C:/Users/Darren/Downloads/"
-FIREFOX_BINARY = "C:\\Program Files\\Firefox Developer Edition\\firefox.exe"
-GECKODRIVER_PATH = "C:\\Users\\Darren\\Downloads\\geckodriver\\"
+FIREFOX_BINARY = "c:/Program Files/Mozilla Firefox/firefox.exe"
+# C:\\Program Files\\Firefox Developer Edition\\firefox.exe"
+GECKODRIVER_PATH = "c:/Users/dwringer/Desktop/geckodriver/64/"  # "C:\\Users\\Darren\\Downloads\\geckodriver\\"
 
 
 class TorInstance(object):
@@ -137,13 +139,18 @@ class ProxyFirefox(object):
         _path = environ['PATH']
         _path = _path + ";" + GECKODRIVER_PATH
         environ['PATH'] = _path
-        _capabilities = DesiredCapabilities.FIREFOX
-        _capabilities["marionette"] = True
-        _capabilities["binary"] = FIREFOX_BINARY
-        _capabilities["proxy"] = json_dumps(
-            {'proxyType': 'manual',
-             'socksProxy': '127.0.0.1:%d' % socks_port})
-        o.browser = Firefox(o.profile, capabilities=_capabilities)
+#        _capabilities = DesiredCapabilities.FIREFOX
+#        _capabilities["marionette"] = True
+#        _capabilities["binary"] = FIREFOX_BINARY
+        #              moz:
+#        _capabilities["firefoxOptions.binary"] = FIREFOX_BINARY
+                                  # json_dumps(
+#        _capabilities["proxy"] =  \
+#            {'proxyType': 'manual',
+#             'socksProxy': '127.0.0.1:%d' % socks_port}
+#            'socksProxyPort':  socks_port}
+        o.browser = Firefox(o.profile, #capabilities=_capabilities,
+                            firefox_binary=FIREFOX_BINARY)
 
 
 class TorBrowser(object):

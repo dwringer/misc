@@ -29,8 +29,8 @@ def image_to_color_graph(filename_in,
         _img = _img.resize(sample_resolution)
     _pixels = _img.load()
     _pixelArray = [_pixels[i, j]
-                   for i in xrange(_img.width)
-                   for j in xrange(_img.height)]
+                   for i in xrange(_img.size[0])
+                   for j in xrange(_img.size[1])]
     if sample_ratio < 1.0:
         shuffle(_pixelArray)
         _sample = map(list, _pixelArray[:int(sample_ratio*len(_pixelArray))])
@@ -54,8 +54,8 @@ def som_image_filter(filename, output_file, output_resolution, som):
     if output_resolution is not None:
         _img = _img.resize(output_resolution)
     _pixels = _img.load()
-    for i in xrange(_img.width):
-        for j in xrange(_img.height):
+    for i in xrange(_img.size[0]):
+        for j in xrange(_img.size[1]):
             _pixels[i, j] = tuple(
                 map(int, som.best_matching_unit(_pixels[i, j]).value))
     _img.save(output_file)

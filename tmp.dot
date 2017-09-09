@@ -1,0 +1,38 @@
+graph nodegraph {
+	"#372533" [style = "filled"];
+	"#372533" [fillcolor = "#372533"];
+	"#615F62" [style = "filled"];
+	"#615F62" [fillcolor = "#615f62"];
+	"#A98143" [style = "filled"];
+	"#A98143" [fillcolor = "#a98143"];
+	"#96B8C1" [style = "filled"];
+	"#96B8C1" [fillcolor = "#96b8c1"];
+	"#A38E57" [style = "filled"];
+	"#A38E57" [fillcolor = "#a38e57"];
+	"#C3A37C" [style = "filled"];
+	"#C3A37C" [fillcolor = "#c3a37c"];
+	"#B0AAAA" [style = "filled"];
+	"#B0AAAA" [fillcolor = "#b0aaaa"];
+	"#4D412B" [style = "filled"];
+	"#4D412B" [fillcolor = "#4d412b"];
+	"#B8D4E2" [style = "filled"];
+	"#B8D4E2" [fillcolor = "#b8d4e2"];
+	"#372533" -- "#615F62";
+	"#372533" -- "#A98143";
+	"#372533" -- "#96B8C1";
+	"#372533" -- "#B0AAAA";
+	"#615F62" -- "#A98143";
+	"#615F62" -- "#A38E57";
+	"#615F62" -- "#4D412B";
+	"#A98143" -- "#C3A37C";
+	"#A98143" -- "#B8D4E2";
+	"#96B8C1" -- "#A38E57";
+	"#96B8C1" -- "#C3A37C";
+	"#96B8C1" -- "#B0AAAA";
+	"#A38E57" -- "#C3A37C";
+	"#A38E57" -- "#4D412B";
+	"#C3A37C" -- "#B8D4E2";
+	"#B0AAAA" -- "#4D412B";
+	"#B0AAAA" -- "#B8D4E2";
+	"#4D412B" -- "#B8D4E2";
+}
