@@ -1,0 +1,265 @@
+<html>
+  <head>
+    <style>
+      .slider_container {
+	  display: inline-block;
+          width: 95%;
+      }
+      .prompt_container {
+	  display: flex;
+	  flex-direction: row;
+	  width: 100%;
+      }
+      .textinput {
+	  flex: 1;
+      }
+      .mainbutton {
+	  border: none;
+	  color: white;
+	  padding: 16px 32px;
+	  text-decoration: none;
+	  margin: 4px 2px;
+	  cursor: pointer;
+      }
+      .greenbutton {
+	  background-color: #04AA6D;
+      }
+      .orangebutton {
+	  background-color: #F96B00;
+      }
+      .redbutton {
+	  background-color: #FC0B00;
+      }
+      .slider {
+	  -webkit-appearance: none;
+	  appearance: none;
+	  width: 100%;
+	  height: 25px;
+	  background: #d3d3d3;
+	  outline: none;
+	  opacity: 0.7;
+	  -webkit-transition: .2s;
+	  transition: opacity .2s;
+      }
+      .slider:hover {
+          opacity: 1;
+      }
+      .slider::-webkit-slider-thumb {
+	  -webkit-appearance: none;
+	  appearance: none;
+	  width: 25px;
+	  height: 25px;
+	  cursor: pointer;
+      }
+      .slider::-moz-range-thumb {
+	  width: 25px;
+	  height: 25px;
+	  cursor: pointer;
+      }
+      .red::-webkit-slider-thumb {
+          background: #FC0B00;
+      }
+      .red::-moz-range-thumb {
+          background: #FC0B00;
+      }
+      .orange::-webkit-slider-thumb {
+          background: #F96B00;
+      }
+      .orange::-moz-range-thumb {
+          background: #F96B00;
+      }
+      .yellow::-webkit-slider-thumb {
+          background: #FFD300;
+      }
+      .yellow::-moz-range-thumb {
+          background: #FFD300;
+      }
+      .green::-webkit-slider-thumb {
+          background: #04AA6D;
+      }
+      .green::-moz-range-thumb {
+          background: #04AA6D;
+      }
+      .blue::-webkit-slider-thumb {
+          background: #0038A8;
+      }
+      .blue::-moz-range-thumb {
+          background: #0038A8;
+      }
+      .indigo::-webkit-slider-thumb {
+          background: #4b0082;
+      }
+      .indigo::-moz-range-thumb {
+          background: #4b0082;
+      }
+      .violet::-webkit-slider-thumb {
+          background: #EE82EE;
+      }      
+      .violet::-moz-range-thumb {
+          background: #EE82EE;
+      }      
+    </style>
+    <script>
+      function getParamValue (roygbiv) {
+	  return document.getElementById("param" + roygbiv).value
+      }
+
+      function getPromptValue (roygbiv) {
+	  return document.getElementById("prompt" + roygbiv).value
+      }
+      
+      function updatePromptResult () {
+	  var blends = [];
+	  ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+	      var val = parseFloat(getParamValue(col));
+	      if (!isNaN(val)) {
+		  blends.push(val);
+	      } else {
+		  blends.push(0);
+	      };
+	  });
+	  var prompts = [];
+	  ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+	      var val = getPromptValue(col);
+	      prompts.push(val);
+	  });
+	  var usePrompts = [];
+	  var useBlends  = [];
+	  for (var i=0; i < prompts.length; i++) {
+	      if (!((prompts[i].trim().length == 0) ||
+		    (blends[i] == 0))) {
+		  usePrompts.push(prompts[i]);
+		  useBlends.push(blends[i]);
+	      };
+	  };
+	  if (0 < useBlends.length) {
+	      var promptText = ('("' +
+				usePrompts.join('", "') +
+				'").blend(' +
+				useBlends.join(', ') +
+				")");
+	      document.getElementById('promptResult').innerHTML = promptText;
+	      if (document.getElementById('autocopy').checked) {
+		  navigator.clipboard.writeText(promptText);
+	      }
+	  };
+      };
+
+      function randf (min, max) {
+	  // From https://stackoverflow.com/questions/34575635/cryptographically-secure-float
+
+	  // A buffer with just the right size to convert to Float64
+	  let buffer = new ArrayBuffer(8);
+	  
+	  // View it as an Int8Array and fill it with 8 random ints
+	  let ints = new Int8Array(buffer);
+	  window.crypto.getRandomValues(ints);
+	  
+	  // Set the sign (ints[7][7]) to 0 and the
+	  // exponent (ints[7][6]-[6][5]) to just the right size 
+	  // (all ones except for the highest bit)
+	  ints[7] = 63;
+	  ints[6] |= 0xf0;
+	  
+	  // Now view it as a Float64Array, and read the one float from it
+	  let float = new DataView(buffer).getFloat64(0, true) - 1;
+
+	  return (min + (float * (max - min)));
+      };
+
+      function addListeners () {
+	  ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+	      document.getElementById("param" + col).oninput = updatePromptResult;
+	  });
+	  ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+	      document.getElementById("prompt" + col).oninput = updatePromptResult;
+	  });
+	  document.getElementById("copybutton").onclick = function () {
+	      var promptResult = document.getElementById("promptResult");
+	      promptResult.select();
+	      promptResult.setSelectionRange(0, 99999);
+	      navigator.clipboard.writeText(promptResult.value);
+	  };
+	  document.getElementById("randombutton").onclick = function () {
+	      ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+		  document.getElementById("param" + col).value = randf(0, 21);
+		  updatePromptResult();
+	      });
+	  };
+	  document.getElementById("resetbutton").onclick = function () {
+	      ["R", "O", "Y", "G", "B", "I", "V"].forEach(function (col) {
+		  document.getElementById("param" + col).value = 1.0;
+		  updatePromptResult();
+	      });
+	  };
+      }
+
+      window.addEventListener('load', addListeners);
+    </script>
+  </head>
+  <body>
+    <div class="slider_container">
+      <div>
+	<span class="prompt_container">
+	  <label for="promptR" style="color: #FC0B00;">PROMPT&#9658;&nbsp;</label>
+	  <input type="text" id="promptR" name="promptR" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider red" id="paramR">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #F96B00;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptO" name="promptO" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider orange" id="paramO">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #FFD300;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptY" name="promptY" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider yellow" id="paramY">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #04AA6D;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptG" name="promptG" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider green" id="paramG">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #0038A8;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptB" name="promptB" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider blue" id="paramB">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #4B0082;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptI" name="promptI" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider indigo" id="paramI">
+      </div>
+      <div>
+	<span class="prompt_container">
+	<label for="promptR" style="color: #EE82EE;">PROMPT&#9658;&nbsp;</label>
+	<input type="text" id="promptV" name="promptV" class="textinput">
+	</span>
+	<input type="range" min="0.0" max="21.0" value="1" step="0.05" class="slider violet" id="paramV">
+      </div>
+
+      <br/>
+      <textarea id="promptResult" rows=7 cols=82 name="promptResult" class="promptresult" readonly></textarea>
+
+      <br/>
+      <input type="button" id="copybutton" class="mainbutton greenbutton" value="Copy">
+      <span style="float: right;">
+      <label for="autocopy">Auto-copy:</label><input type="checkbox" id="autocopy" name="autocopy" value="true">
+      <input type="button" id="randombutton" class="mainbutton orangebutton" value="Random">
+      <input type="button" id="resetbutton" class="mainbutton redbutton" value="Reset">
+      </span>
+      
+    </div>
+  </body>
+</html>
