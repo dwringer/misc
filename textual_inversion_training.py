@@ -2,6 +2,7 @@
 # https://github.com/huggingface/diffusers/blob/main/examples/textual_inversion/textual_inversion.py
 # on January 2, 2023
 # and modified slightly by Lincoln Stein (@lstein) to work with InvokeAI
+# modified 3 Apr 2023 by Darren Ringer (@dwringer) to add support for custom caption files
 
 """
 This is the backend to "textual_inversion.py"
